@@ -154,8 +154,6 @@ To further investigate missingness, I performed permutation tests on the missing
   style="display: block; margin-bottom: 10px;"
 ></iframe>
 
-#### Result: The missingness of `followers` strongly depends on whether the track has multiple artists.
-
 **Null hypothesis:** The missingness of `followers` does not depend on whether a track has multiple artists.
 
 **Alternative hypothesis:** The missingness of `followers` does depend on whether a track has multiple artists.
@@ -163,6 +161,8 @@ To further investigate missingness, I performed permutation tests on the missing
 **Test statistic:** Absolute difference in the proportion of multiple-artist tracks between rows where `followers` is missing and rows where `followers` is not missing.
 
 **p-value:** `p < 0.001`
+
+#### Result: The missingness of `followers` strongly depends on whether the track has multiple artists.
 
 For this missingness dependency test, a temporary left-merged DataFrame was created by merging the tracks dataset with the artists dataset while keeping all tracks, even when artist-level information failed to match. The permutation test found an observed difference of about **0.909** with `p < 0.001`, so the missingness of `followers` strongly depends on whether a track has multiple artists.
 
@@ -173,14 +173,12 @@ This makes sense because tracks with multiple artists are harder to match exactl
 ### Missingness of `followers` and Track Popularity
 
 <iframe
-  src="assets/popularity-track-missingness.html"
+  src="assets/popularity_track_missingness.html"
   width="800"
   height="400"
   frameborder="0"
   style="display: block; margin-bottom: 10px;"
 ></iframe>
-
-#### Result: The missingness of `followers` does not depend on `popularity_track`.
 
 **Null hypothesis:** Missingness of `followers` does not depend on `popularity_track`.
 
@@ -189,6 +187,8 @@ This makes sense because tracks with multiple artists are harder to match exactl
 **Test statistic:** Absolute difference in mean `popularity_track` between rows where `followers` is missing and rows where `followers` is not missing.
 
 **p-value:** `0.44`
+
+#### Result: The missingness of `followers` does not depend on `popularity_track`.
 
 The permutation test produced a p-value of **0.44**, so there is not enough evidence to conclude that missingness in `followers` depends on `popularity_track`. This non-dependency makes sense because whether artist follower information fails to merge is more related to artist-name matching issues than to how popular the track itself is.
 
@@ -352,3 +352,180 @@ This means the baseline model performed slightly better than simply predicting t
 Overall, I do **not** consider the current baseline model to be a strong predictive model. Its RMSE is still high on a **0–100 popularity scale**, and its `(R^2)` value is very low.
 
 However, it is a useful baseline because it satisfies the modeling requirements, generalizes similarly on the training and test sets, and gives a simple comparison point for the final model.
+
+# Final Model
+
+For the final model, I improved on the baseline model by adding more predictive features, engineering new features, and using a more flexible modeling algorithm. The response variable remained `popularity_track`, and the model was still evaluated using **RMSE** and `(R^2)` on the same train-test split structure as the baseline model.
+
+---
+
+## Features Used
+
+The final model used the original features:
+
+* `song_type`
+* `danceability`
+* `energy`
+* `speechiness`
+* `liveness`
+* `valence`
+* `popularity_artist`
+* `followers`
+
+In addition, I engineered two new features:
+
+* `log_followers`
+* `dance_energy_interaction`
+
+The feature `log_followers` is a log-transformed version of `followers`, which is useful because follower counts are highly skewed. The difference between smaller artists and medium-sized artists is often more meaningful than the same raw follower difference among extremely large artists.
+
+The feature `dance_energy_interaction` multiplies `danceability` and `energy`, which is useful because songs that are both highly danceable and highly energetic may behave differently from songs that are high in only one of those features.
+
+---
+
+## Modeling Algorithm
+
+The final model used a `RandomForestRegressor`.
+
+This algorithm was chosen because the baseline `LinearRegression` model could only capture linear relationships, while a random forest can capture nonlinear patterns and interactions between features. This is appropriate for music popularity prediction because popularity likely depends on combinations of song features and artist-level features rather than one simple linear relationship.
+
+---
+
+## Hyperparameter Selection
+
+To select the best hyperparameters, I used `GridSearchCV` with **5-fold cross-validation** on the training data.
+
+The hyperparameters tuned were:
+
+* `n_estimators`
+* `max_depth`
+* `min_samples_leaf`
+
+These were chosen because they control the complexity and stability of the random forest:
+
+* `n_estimators` controls the number of trees.
+* `max_depth` controls how deep each tree can grow.
+* `min_samples_leaf` controls how small each leaf node can be.
+
+The best-performing hyperparameters were:
+
+| Hyperparameter     | Best Value |
+| :----------------- | :--------- |
+| `n_estimators`     | **200**    |
+| `max_depth`        | **None**   |
+| `min_samples_leaf` | **1**      |
+
+---
+
+## Final Model Performance
+
+The final model performed much better than the baseline model.
+
+| Model                      | Test RMSE | Test `(R^2)` |
+| :------------------------- | --------: | -----------: |
+| Baseline Linear Regression | **24.74** |     **0.03** |
+| Final Random Forest        | **13.90** |     **0.69** |
+
+The baseline linear regression model had a test RMSE of about **24.74** and a test `(R^2)` of about **0.03**. The final random forest model had a test RMSE of about **13.90** and a test `(R^2)` of about **0.69**.
+
+This means the final model made substantially smaller prediction errors and explained much more of the variation in track popularity.
+
+---
+
+## Model Performance Visualization
+
+<iframe
+  src="assets/hypothesis-test.html"
+  width="800"
+  height="400"
+  frameborder="0"
+  style="display: block; margin-bottom: 10px;"
+></iframe>
+
+---
+
+### Final Model Results Table
+
+| Dataset | RMSE | R² |
+|:---|---:|---:|
+| Train | 7.47 | 0.91 |
+| Test | 13.90 | 0.69 |
+
+
+### Baseline vs. Final Model Comparison
+
+| Model | Train RMSE | Test RMSE | Train R² | Test R² |
+|:---|---:|---:|---:|---:|
+| Baseline Linear Regression | 25.05 | 24.74 | 0.03 | 0.03 |
+| Final Random Forest | 7.47 | 13.90 | 0.91 | 0.69 |
+
+
+### Example Final Model Predictions
+
+| Actual Popularity | Predicted Popularity |
+|---:|---:|
+| 0 | 9.24 |
+| 0 | 11.65 |
+| 61 | 49.70 |
+| 46 | 49.41 |
+| 58 | 47.44 |
+
+---
+
+## Overall Assessment
+
+The final model did show some overfitting because its training RMSE was about **7.47**, while its test RMSE was about **13.90**. However, even on unseen test data, the final model was still a major improvement over the baseline model.
+
+Overall, the final model is much stronger because it uses more relevant features, includes meaningful feature engineering, captures nonlinear relationships, and performs better on the test set.
+
+# Fairness Analysis
+
+For the fairness analysis, I compared the final model’s performance across two groups based on `song_type`.
+
+---
+
+## Groups Compared
+
+**Group X:** `Hip-Hop Song`
+**Group Y:** `Non-Hip-Hop Song`
+
+The evaluation metric used was **RMSE** because this is a regression model predicting `popularity_track`. RMSE is appropriate because it measures the average size of the model’s prediction errors, with larger errors penalized more heavily.
+
+---
+
+## Hypotheses
+
+**Null hypothesis:** The final model is fair across song type. Its RMSE for `Hip-Hop Song` tracks and `Non-Hip-Hop Song` tracks is roughly the same, and any observed difference is due to random chance.
+
+**Alternative hypothesis:** The final model performs worse for `Hip-Hop Song` tracks than for `Non-Hip-Hop Song` tracks. In other words, the RMSE for `Hip-Hop Song` tracks is higher than the RMSE for `Non-Hip-Hop Song` tracks.
+
+---
+
+## Test Statistic
+
+**Test statistic:** RMSE for `Hip-Hop Song` minus RMSE for `Non-Hip-Hop Song`.
+
+**Significance level:** `0.05`
+
+---
+
+## Fairness Test Visualization
+
+<iframe
+  src="assets/fairness-test.html"
+  width="800"
+  height="400"
+  frameborder="0"
+  style="display: block; margin-bottom: 10px;"
+></iframe>
+
+---
+
+## Results and Conclusion
+
+The observed test statistic was approximately **0.595**, meaning the final model’s RMSE was about **0.595 points higher** for `Hip-Hop Song` tracks than for `Non-Hip-Hop Song` tracks. The resulting p-value was **0.329**.
+
+Since the p-value is greater than the significance level of `0.05`, I fail to reject the null hypothesis. There is not enough evidence to conclude that the final model performs worse for `Hip-Hop Song` tracks than for `Non-Hip-Hop Song` tracks.
+
+Based on this fairness test, the model does not show significant evidence of unfairness across these two song-type groups.
+
