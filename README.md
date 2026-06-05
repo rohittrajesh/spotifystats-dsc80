@@ -123,3 +123,232 @@ The nonzero popularity box plot gives a cleaner comparison after removing tracks
 | Non-Hip-Hop Song |            7447 |                35.199 |                      39 |             0.660 |       0.699 |        0.509 |
 
 The aggregate table shows that non-hip-hop songs by hip-hop artists have a higher mean and median track popularity than hip-hop songs in this cleaned dataset, with a much larger number of non-hip-hop songs represented. The audio feature averages are fairly similar across both groups, suggesting that the main difference in this summary table is popularity rather than large differences in features like energy, speechiness, liveness, or valence.
+
+# Assessment of Missingness
+
+## NMAR Analysis
+
+There may be some missingness in this dataset that is **NMAR**, or **not missing at random**. In particular, missing values in columns related to artist or track metadata, such as `artist_genre`, `track_genre`, `followers`, or `popularity`, may depend on the actual value that is missing.
+
+For example, a smaller or less-established artist may be less likely to have complete genre tags, follower counts, or popularity information recorded on Spotify. In that case, the missingness would not just be caused by another observed column in the dataset; it would be related to the artist’s actual level of visibility or popularity.
+
+This matters because the project focuses on comparing popularity between hip-hop artists’ hip-hop and non-hip-hop songs. If less popular artists or less popular tracks are more likely to have missing metadata, then dropping rows with missing values could make the cleaned dataset overrepresent more visible or established artists. That would make the missingness potentially **NMAR** because the reason a value is missing may be connected to the unobserved popularity, genre classification, or artist visibility itself.
+
+Additional data that would help explain the missingness includes information about how Spotify collects genre and popularity data, whether missing values are more common for newer or less-streamed artists, and whether certain labels, countries, or independent artists have less complete metadata. If those additional variables explained the missingness, then the missingness might be better classified as **MAR** instead of **NMAR**.
+
+---
+
+## Missingness Dependency
+
+To further investigate missingness, I performed permutation tests on the missingness of `followers`. The goal was to determine whether missingness in `followers` depended on other observed columns in the data.
+
+---
+
+### Missingness of `followers` and Multiple Artists
+
+<iframe
+  src="assets/multiple-artists-missingness.html"
+  width="800"
+  height="400"
+  frameborder="0"
+  style="display: block; margin-bottom: 10px;"
+></iframe>
+
+#### Result: The missingness of `followers` strongly depends on whether the track has multiple artists.
+
+**Null hypothesis:** The missingness of `followers` does not depend on whether a track has multiple artists.
+
+**Alternative hypothesis:** The missingness of `followers` does depend on whether a track has multiple artists.
+
+**Test statistic:** Absolute difference in the proportion of multiple-artist tracks between rows where `followers` is missing and rows where `followers` is not missing.
+
+**p-value:** `p < 0.001`
+
+For this missingness dependency test, a temporary left-merged DataFrame was created by merging the tracks dataset with the artists dataset while keeping all tracks, even when artist-level information failed to match. The permutation test found an observed difference of about **0.909** with `p < 0.001`, so the missingness of `followers` strongly depends on whether a track has multiple artists.
+
+This makes sense because tracks with multiple artists are harder to match exactly to a single artist name in the artists dataset, causing artist-level fields like `followers` to become missing after the merge.
+
+---
+
+### Missingness of `followers` and Track Popularity
+
+<iframe
+  src="assets/popularity-track-missingness.html"
+  width="800"
+  height="400"
+  frameborder="0"
+  style="display: block; margin-bottom: 10px;"
+></iframe>
+
+#### Result: The missingness of `followers` does not depend on `popularity_track`.
+
+**Null hypothesis:** Missingness of `followers` does not depend on `popularity_track`.
+
+**Alternative hypothesis:** Missingness of `followers` does depend on `popularity_track`.
+
+**Test statistic:** Absolute difference in mean `popularity_track` between rows where `followers` is missing and rows where `followers` is not missing.
+
+**p-value:** `0.44`
+
+The permutation test produced a p-value of **0.44**, so there is not enough evidence to conclude that missingness in `followers` depends on `popularity_track`. This non-dependency makes sense because whether artist follower information fails to merge is more related to artist-name matching issues than to how popular the track itself is.
+
+Since `followers` missingness does depend on `multiple_artists` but does not depend on `popularity_track`, this supports classifying the missingness as **MAR**, because the missingness can be explained by an observed column in the data.
+
+# Hypothesis Testing
+
+To answer the research question, a **one-sided permutation test** was used to compare the popularity of hip-hop artists’ hip-hop songs and non-hip-hop songs.
+
+---
+
+## Hypotheses
+
+**Null hypothesis:** Among hip-hop artists, the popularity of hip-hop songs and non-hip-hop songs comes from the same distribution.
+
+**Alternative hypothesis:** Among hip-hop artists, non-hip-hop songs tend to have higher popularity than hip-hop songs.
+
+---
+
+## Test Statistic
+
+**Test statistic:** Mean popularity of non-hip-hop songs minus mean popularity of hip-hop songs.
+
+**Significance level:** `0.05`
+
+This test statistic is appropriate because the research question asks whether non-hip-hop songs by hip-hop artists are more successful than their hip-hop songs. Since success is measured using `popularity_track`, a positive test statistic means that non-hip-hop songs have higher average popularity than hip-hop songs. A permutation test is appropriate because the null hypothesis says the two groups come from the same distribution, meaning the `song_type` labels can be shuffled under the null.
+
+---
+
+## Permutation Test Visualization
+
+<iframe
+  src="assets/hypothesis-test.html"
+  width="800"
+  height="400"
+  frameborder="0"
+  style="display: block; margin-bottom: 10px;"
+></iframe>
+
+---
+
+## Results and Conclusion
+
+The observed test statistic was approximately **4.381**, meaning that non-hip-hop songs had an average popularity score about **4.381 points higher** than hip-hop songs. The resulting p-value was `0.0`, which should be interpreted as **p < 0.001** because none of the 1000 simulated test statistics were at least as large as the observed statistic.
+
+Since the p-value is less than the significance level of `0.05`, the **null hypothesis is rejected**. There is evidence to suggest that, among hip-hop artists in this dataset, **non-hip-hop songs tend to have higher popularity than hip-hop songs**.
+
+# Framing a Prediction Problem
+
+For the prediction portion of this project, the goal is to predict a song’s `popularity_track` score using information about the song and its artist. This is a **regression problem** because the response variable, `popularity_track`, is numerical and ranges from **0 to 100**.
+
+---
+
+## Response Variable
+
+The response variable is `popularity_track`, which represents the Spotify popularity score of a specific track. This variable was chosen because it directly connects to the main research question: whether hip-hop artists find more success in their non-hip-hop songs compared to their hip-hop songs.
+
+Since the earlier hypothesis test used track popularity as the main measure of success, predicting `popularity_track` keeps the predictive model aligned with the rest of the project.
+
+---
+
+## Information Available at the Time of Prediction
+
+At the time of prediction, the model would reasonably know information about the song’s genre label and audio features, such as:
+
+* `song_type`
+* `danceability`
+* `energy`
+* `speechiness`
+* `liveness`
+* `valence`
+
+The model could also use artist-level information such as `popularity_artist` and `followers`, since these describe the artist’s general Spotify presence rather than the specific future popularity outcome of the track.
+
+The model should not use information that directly leaks the answer, such as another version of the track popularity score.
+
+---
+
+## Evaluation Metric
+
+The model will be evaluated using **root mean squared error**, or **RMSE**.
+
+RMSE is appropriate because this is a regression problem and the goal is to measure how far the predicted popularity scores are from the true popularity scores. RMSE is preferred over accuracy because accuracy is meant for classification problems, not numerical prediction.
+
+RMSE is also useful because it penalizes larger prediction errors more heavily, which matters when predicting a popularity score on a **0–100 scale**.
+
+# Baseline Model
+
+For the baseline model, I built a **regression model** to predict `popularity_track`, which represents the Spotify popularity score of a track. This is a regression model because the response variable is quantitative, ranging from **0 to 100**. The model was implemented using a single `sklearn` Pipeline that handled both preprocessing and model training.
+
+---
+
+## Features Used
+
+The baseline model used four features:
+
+* `song_type`
+* `danceability`
+* `energy`
+* `popularity_artist`
+
+The feature `song_type` is a **nominal categorical** feature because it labels each song as either a hip-hop song or a non-hip-hop song, with no natural ordering. This feature was encoded using `OneHotEncoder`.
+
+The features `danceability`, `energy`, and `popularity_artist` are **quantitative** features and were passed through the pipeline without transformation.
+
+Overall, the model used:
+
+* **3 quantitative features**
+* **1 nominal feature**
+* **0 ordinal features**
+
+---
+
+## Model Choice
+
+The model itself was a `LinearRegression` model. This was appropriate for a baseline model because it is simple, interpretable, and gives a clear starting point for comparison with the final model.
+
+To evaluate generalization to unseen data, the data was split into training and test sets.
+
+---
+
+## Baseline Model Performance
+
+The baseline model had a **training RMSE of about 25.05** and a **test RMSE of about 24.74**. The training and test `(R^2)` values were both about **0.03**, meaning the model explained only around **3%** of the variation in track popularity.
+
+The baseline model was also compared to a simple mean-prediction baseline, which always predicts the average popularity from the training set. The mean baseline had a **test RMSE of about 25.09**, while the linear model had a **test RMSE of about 24.74**.
+
+This means the baseline model performed slightly better than simply predicting the average track popularity, but the improvement was small.
+
+---
+
+### Baseline Model Results Table
+
+| Dataset | RMSE | R² |
+|:---|---:|---:|
+| Train | 25.05 | 0.03 |
+| Test | 24.74 | 0.03 |
+
+### Mean Baseline Comparison
+
+| Dataset | Mean Baseline RMSE | Linear Model RMSE |
+|:---|---:|---:|
+| Train | 25.39 | 25.05 |
+| Test | 25.09 | 24.74 |
+
+
+### Example Baseline Predictions
+
+| Actual Popularity | Predicted Popularity |
+|---:|---:|
+| 0 | 30.37 |
+| 0 | 31.87 |
+| 61 | 38.08 |
+| 46 | 40.52 |
+| 58 | 31.31 |
+
+---
+
+## Overall Assessment
+
+Overall, I do **not** consider the current baseline model to be a strong predictive model. Its RMSE is still high on a **0–100 popularity scale**, and its `(R^2)` value is very low.
+
+However, it is a useful baseline because it satisfies the modeling requirements, generalizes similarly on the training and test sets, and gives a simple comparison point for the final model.
