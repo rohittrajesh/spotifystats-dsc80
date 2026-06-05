@@ -79,8 +79,10 @@ Finally, these two groups were combined into `hiphop_artist_music_comparison`, w
 <iframe
   src="assets/danceability-distribution.html"
   width="800"
-  height="600"
+  height="400"
   frameborder="0"
+  style="display: block; margin-bottom: 10px;"
+  
 ></iframe>
 
 The distribution of `danceability` among songs by hip-hop artists is concentrated mostly between about **0.5 and 0.85**, with the highest counts around **0.7 to 0.8**. This suggests that songs by hip-hop artists in this dataset tend to be relatively danceable, which makes sense given the rhythmic structure often associated with hip-hop, rap, and related genres.
@@ -90,8 +92,9 @@ The distribution of `danceability` among songs by hip-hop artists is concentrate
 <iframe
   src="assets/nonzero-popularity-distribution.html"
   width="800"
-  height="600"
+  height="400"
   frameborder="0"
+  style="display: block; margin-bottom: 10px;"
 ></iframe>
 
 The distribution of nonzero track popularity is centered mostly around the **35 to 65** range, with fewer songs reaching very high popularity scores above **80**. This shows that most songs by hip-hop artists have moderate popularity, while extremely popular tracks are less common.
@@ -103,8 +106,9 @@ The distribution of nonzero track popularity is centered mostly around the **35 
 <iframe
   src="assets/nonzero-popularity-by-song-type.html"
   width="800"
-  height="600"
+  height="400"
   frameborder="0"
+  style="display: block; margin-bottom: 10px;"
 ></iframe>
 
 The nonzero popularity box plot gives a cleaner comparison after removing tracks with a popularity score of `0`. In this version, hip-hop songs have a higher median popularity than non-hip-hop songs, suggesting that the large number of zero-popularity hip-hop tracks strongly affects the original comparison.
