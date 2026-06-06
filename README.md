@@ -107,8 +107,8 @@ The distribution of `danceability` among songs by hip-hop artists is concentrate
 
 <iframe
   src="assets/nonzero-popularity-distribution.html"
-  width="800"
-  height="400"
+  width="900"
+  height="430"
   frameborder="0"
   style="display: block; margin-bottom: 10px;"
 ></iframe>
