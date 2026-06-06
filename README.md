@@ -1,3 +1,9 @@
+# Beyond the Bars: Analyzing Cross-Genre Success Among Hip-Hop Artists
+
+**Rohit Aryan Rajesh**  
+
+---
+
 # Introduction
 
 Music streaming platforms like Spotify provide a large amount of data about songs, artists, genres, and listener engagement. In this project, we are working with two datasets provided by Spotify: `music_tracks.csv`, which contains track-level information, and `artists.csv`, which contains artist-level information.
@@ -73,6 +79,16 @@ The cleaned tracks and artists datasets were then merged using `tracks['artists'
 To prepare for the main comparison, two Boolean columns were created. The column `is_hiphop_artist` identifies artists whose `artist_genre` tags include hip-hop-related terms such as hip hop, rap, trap, or drill. The column `is_hiphop_track` identifies whether the specific track’s `track_genre` is hip-hop-related. This allowed the data to be separated into hip-hop artists’ hip-hop songs and hip-hop artists’ non-hip-hop songs.
 
 Finally, these two groups were combined into `hiphop_artist_music_comparison`, with a new `song_type` column labeling each row as either `"Hip-Hop Song"` or `"Non-Hip-Hop Song"`. This final cleaned DataFrame is organized for the project’s main visualizations, aggregate tables, hypothesis test, and regression analysis. Low-popularity songs and artists were not removed because popularity is the main outcome variable, and filtering by the outcome before analysis could bias the results.
+
+Below is the head of the cleaned DataFrame used for main analysis: 
+
+| artists          | track_name   | song_type    | track_genre   |   popularity_track |   popularity_artist |   danceability |   energy |   speechiness |   liveness |   valence |
+|:-----------------|:-------------|:-------------|:--------------|-------------------:|--------------------:|---------------:|---------:|--------------:|-----------:|----------:|
+| King             | OOPS         | Hip-Hop Song | hip-hop       |                 75 |                  63 |          0.918 |    0.673 |         0.184 |      0.056 |     0.828 |
+| King             | Ektarfa      | Hip-Hop Song | hip-hop       |                 71 |                  63 |          0.748 |    0.472 |         0.125 |      0.102 |     0.364 |
+| XXXTENTACION     | Hope         | Hip-Hop Song | hip-hop       |                 86 |                  92 |          0.592 |    0.457 |         0.06  |      0.146 |     0.225 |
+| The PropheC      | Kina Chir    | Hip-Hop Song | hip-hop       |                 72 |                  60 |          0.622 |    0.431 |         0.029 |      0.088 |     0.365 |
+| Sidhu Moose Wala | So High      | Hip-Hop Song | hip-hop       |                 72 |                  70 |          0.538 |    0.763 |         0.205 |      0.109 |     0.484 |
 
 ## Univariate Analysis
 
@@ -528,4 +544,3 @@ The observed test statistic was approximately **0.595**, meaning the final model
 Since the p-value is greater than the significance level of `0.05`, I fail to reject the null hypothesis. There is not enough evidence to conclude that the final model performs worse for `Hip-Hop Song` tracks than for `Non-Hip-Hop Song` tracks.
 
 Based on this fairness test, the model does not show significant evidence of unfairness across these two song-type groups.
-
